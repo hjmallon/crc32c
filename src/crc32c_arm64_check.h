@@ -33,6 +33,14 @@ extern "C" unsigned long getauxval(unsigned long type) __attribute__((weak));
 #include <sys/sysctl.h>
 #endif  // defined (__APPLE__)
 
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
+#define CRC32C_OS_WINDOWS
+#endif
+
+#ifdef CRC32C_OS_WINDOWS
+#include <windows.h>
+#endif
+
 namespace crc32c {
 
 inline bool CanUseArm64Crc32() {
@@ -47,6 +55,8 @@ inline bool CanUseArm64Crc32() {
   int val = 0;
   size_t len = sizeof(val);
   return sysctlbyname("hw.optional.armv8_crc32", &val, &len, nullptr, 0) == 0 && val != 0;
+#elif defined(CRC32C_OS_WINDOWS)
+  return IsProcessorFeaturePresent(PF_ARM_V8_CRC32_INSTRUCTIONS_AVAILABLE) != 0;
 #else
   return false;
 #endif  // HAVE_STRONG_GETAUXVAL || HAVE_WEAK_GETAUXVAL
